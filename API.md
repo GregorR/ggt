@@ -89,7 +89,10 @@ GGT(baf, (ggt_thread_t *thr), {
 }
 ```
 
-Use `GGT_JOIN` to wait for a thread to terminate, as shown above.
+Use `GGT_JOIN` to wait for a thread to terminate, as shown above. `GGT_JOIN`
+requires extra information in the thread metadata. To save space, if you don't
+need thread joining, you can disable it by setting `GGT_SUPP_JOIN` to `0` before
+including `"ggt/green.h"`.
 
 To spawn the initial threads (i.e., to spawn a thread from a non-green-thread
 environment), use a `ggt_thread_list_t` as the parent, using `GGT_INIT` to
@@ -180,3 +183,27 @@ otherwise by including `"ggt/teal.h"`.
 You can use green threads on a platform that supports native threads. To use
 both at the same time, define `GGT_SUPP_THREADS` to `1` *before* including
 `"ggt/green.h"`. If you don't, green threads won't be threadsafe.
+
+
+## Semaphores
+
+GGT provides semaphores for synchronization. Locks can be implemented in terms
+of semaphores.
+
+Include `"ggt/sem.h"` for semaphore support. The type of a semaphore is
+`ggt_sem_t`. The API is similar to POSIX semaphores:
+
+`ggt_sem_init(semaphore, value)` initializes a semaphore with the given value.
+`semaphore` is a `ggt_sem_t *`.
+
+`ggt_sem_destroy(semaphore)` cleans up a semaphore.
+
+`ggt_sem_post(thread, semaphore)` posts a semaphore. `thread` is a pointer to
+the *current* thread.
+
+`GGT_SEM_WAIT(semaphore)` waits for a semaphore. Note that this is a macro, and
+can only be used inside of a GGT function.
+
+`ggt_sem_trywait(semaphore)` attempts to wait for a semaphore, but fails if it's
+not immediately available. It returns `0` if the semaphore was available, and a
+non-zero value if it wasn't.

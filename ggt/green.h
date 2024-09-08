@@ -3,6 +3,16 @@
 
 #include <stdlib.h>
 
+#define GGT_GREEN 1
+
+#ifndef GGT_SUPP_THREADS
+#define GGT_SUPP_THREADS 0
+#endif
+
+#ifndef GGT_SUPP_JOIN
+#define GGT_SUPP_JOIN 1
+#endif
+
 #ifndef GGT_SUPP_EXCEPTIONS
 #define GGT_SUPP_EXCEPTIONS 1
 #endif
@@ -11,17 +21,72 @@
 #define GGT_SUPP_SJLJ 1
 #endif
 
+#if GGT_SUPP_THREADS
+#include "detect.h"
+#if !GGGGT_THREADS_NATIVE
+#undef GGT_SUPP_THREADS
+#define GGT_SUPP_THREADS 0
+#else
+#include "native-sem.h"
+#endif
+#endif
+
+#if GGT_SUPP_THREADS
+#define GGGGT_IF_THREADS(block) do block while(0)
+#else
+#define GGGGT_IF_THREADS(block)
+#endif
+
+#if GGT_SUPP_JOIN
+#define GGGGT_IF_JOIN(block) do block while (0)
+#else
+#define GGGGT_IF_JOIN(block)
+#endif
+
+#if GGT_SUPP_EXCEPTIONS
+#define GGGGT_IF_EXCEPTIONS(block) do block while(0)
+#define GGGGT_IF_EXCSJLJ(block) do block while (0)
+#else
+#define GGGGT_IF_EXCEPTIONS(block)
+#endif
+
+#if GGT_SUPP_SJLJ
+#define GGGGT_IF_SJLJ(block) do block while(0)
+#ifndef GGGGT_IF_EXCSJLJ
+#define GGGGT_IF_SJLJ(block) do block while(0)
+#endif
+#else
+#define GGGGT_IF_SJLJ(block)
+#endif
+
+#ifndef GGGGT_IF_EXCSJLJ
+#define GGGGT_IF_EXCSJLJ(block)
+#endif
+
 #define GGGGT_STATE_INIT (0)
 #define GGGGT_STATE_DONE (-1)
 
 typedef struct ggt_thread_list_t {
     struct ggt_thread_t *next;
+#if GGT_SUPP_THREADS
+    ggt_native_sem_t lock[1];
+#endif
 } ggt_thread_list_t;
+
+#if GGT_SUPP_JOIN
+#include "sem-types.h"
+#endif
 
 typedef struct ggt_thread_t {
     struct ggt_thread_t *next, *prev;
     struct ggt_stack_t *stack;
+#if GGT_SUPP_THREADS
+    ggt_native_sem_t *lock;
+#endif
+#if GGT_SUPP_JOIN
+    ggt_sem_t joinLock;
     ggt_thread_list_t joined;
+#endif
 #if GGT_SUPP_EXCEPTIONS || GGT_SUPP_SJLJ
     void *throw_;
 #endif
@@ -43,22 +108,6 @@ typedef struct ggt_jmpbuf_t {
 } ggt_jmpbuf_t;
 #endif
 
-#if GGT_SUPP_EXCEPTIONS || GGT_SUPP_SJLJ
-#define GGGGT_EXC_INIT_THR(thr) do { \
-    (thr).throw_ = NULL; \
-} while (0)
-#define GGGGT_EXC_INIT_STACK(stack) do { \
-    (stack)->catch_ = 0; \
-} while (0)
-#define GGGGT_EXC_CALL_DONE(stack) \
-    ((stack)->state != GGGGT_STATE_DONE && !(stack)->catch_)
-#else
-#define GGGGT_EXC_INIT_THR(thr)
-#define GGGGT_EXC_INIT_STACK(stack)
-#define GGGGT_EXC_CALL_DONE(stack) \
-    ((stack)->state != GGGGT_STATE_DONE)
-#endif
-
 #define GGT(name, params, locals, trans) \
 struct name ## Locals locals; \
 void name ## Runner(ggt_thread_t *); \
@@ -73,7 +122,9 @@ ggt_stack_t *name params { \
     stack->next = thr->stack; \
     stack->target = name ## Runner; \
     stack->state = GGGGT_STATE_INIT; \
-    GGGGT_EXC_INIT_STACK(stack); \
+    GGGGT_IF_EXCSJLJ({ \
+        (stack)->catch_ = 0; \
+    }); \
     l = (struct name ## Locals *) (void *) (stack + 1); \
     trans \
     thr->stack = stack; \
@@ -117,18 +168,46 @@ void name ## Runner(ggt_thread_t *thr) { \
 while (!(cond)) \
     GGT_YIELD()
 
+
+#if GGT_SUPP_EXCEPTIONS || GGT_SUPP_SJLJ
+#define GGGGT_EXC_CALL_DONE(stack) \
+    ((stack)->state != GGGGT_STATE_DONE && !(stack)->catch_)
+#else
+#define GGGGT_EXC_CALL_DONE(stack) \
+    ((stack)->state != GGGGT_STATE_DONE)
+#endif
+
 #define GGT_CALL(name, args) do { \
     stack->state = __LINE__; stackNext = name args; if (GGGGT_EXC_CALL_DONE(stackNext)) return; thr->stack = stack; free(stackNext); case __LINE__: \
 } while (0)
 
 #define GGT_INIT(list) do { \
     (list).next = NULL; \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_init((list).lock, 1); \
+    }); \
+} while (0)
+
+#define GGT_FREE(list) do { \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_destroy((list).lock); \
+    }); \
 } while (0)
 
 #define GGT_SPAWN(list, thr, name, args) do { \
     (thr).stack = NULL; \
-    (thr).joined.next = NULL; \
-    GGGGT_EXC_INIT_THR(thr); \
+    GGT_INIT((thr).joined); \
+    GGGGT_IF_JOIN({ \
+        ggt_sem_init(&(thr).joinLock, 1); \
+        GGT_INIT((thr).joined); \
+    }); \
+    GGGGT_IF_EXCSJLJ({ \
+        (thr).throw_ = NULL; \
+    }); \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_wait((list).lock); \
+        (thr).lock = (list).lock; \
+    }); \
     if ((list).next) { \
         (list).next->prev = &(thr); \
         (thr).next = (list).next; \
@@ -137,14 +216,25 @@ while (!(cond)) \
     } \
     (list).next = &(thr); \
     (thr).prev = (ggt_thread_t *) (void *) &(list); \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_post((list).lock); \
+    }); \
     name args; \
 } while (0)
 
-#define GGT_SLEEP(list) do { \
+#define GGGGT_SLEEP_NY(list) do { \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_wait(thr->lock); \
+    }); \
     if (thr->prev) \
         thr->prev->next = thr->next; \
     if (thr->next) \
         thr->next->prev = thr->prev; \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_post(thr->lock); \
+        ggt_native_sem_wait((list).lock); \
+        thr->lock = (list).lock; \
+    }); \
     if ((list).next) { \
         (list).next->prev = thr; \
         thr->next = (list).next; \
@@ -153,18 +243,40 @@ while (!(cond)) \
     } \
     (list).next = thr; \
     thr->prev = (ggt_thread_t *) (void *) &(list); \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_post((list).lock); \
+    }); \
+} while (0)
+
+#define GGT_SLEEP(list) do { \
+    GGGGT_SLEEP_NY(list); \
     GGT_YIELD(); \
 } while (0)
 
 #define GGT_WAKE_ONE(list) do { \
+    GGGGT_IF_THREADS({ \
+        ggt_native_sem_wait((list).lock); \
+    }); \
     if ((list).next) { \
         ggt_thread_t *othr_ = (list).next; \
         (list).next = othr_->next; \
+        GGGGT_IF_THREADS({ \
+            ggt_native_sem_post((list).lock); \
+            ggt_native_sem_wait(thr->lock); \
+            othr_->lock = thr->lock; \
+        }); \
         if (thr->next) \
             thr->next->prev = othr_; \
         othr_->next = thr->next; \
         thr->next = othr_; \
         othr_->prev = thr; \
+        GGGGT_IF_THREADS({ \
+            ggt_native_sem_post(thr->lock); \
+        }); \
+    } else { \
+        GGGGT_IF_THREADS({ \
+            ggt_native_sem_post((list).lock); \
+        }); \
     } \
 } while (0)
 
@@ -172,11 +284,6 @@ while (!(cond)) \
     while ((list).next) { \
         GGT_WAKE_ONE(list); \
     } \
-} while (0)
-
-#define GGT_JOIN(thr) do { \
-    if ((thr).stack) \
-        GGT_SLEEP((thr).joined); \
 } while (0)
 
 #if GGT_SUPP_EXCEPTIONS
@@ -214,11 +321,22 @@ while (!(cond)) \
 } while (0)
 #endif
 
+#if GGT_SUPP_JOIN
+#include "sem.h"
+#endif
+
 static void ggtRun(ggt_thread_list_t *list) {
     ggt_thread_t *thr, *nthr;
     while (list->next) {
         for (thr = list->next; thr; thr = nthr) {
+#if GGT_SUPP_THREADS
+            ggt_native_sem_wait(thr->lock);
+#endif
             nthr = thr->next;
+#if GGT_SUPP_THREADS
+            ggt_native_sem_post(thr->lock);
+#endif
+
             ggt_stack_t *stack = thr->stack;
             if (stack) {
 #if GGT_SUPP_EXCEPTIONS || GGT_SUPP_SJLJ
@@ -238,13 +356,42 @@ static void ggtRun(ggt_thread_list_t *list) {
                     stack->target(thr);
                 }
             } else {
-                GGT_WAKE(thr->joined);
-                thr->prev->next = thr->next;
-                if (thr->next)
-                    thr->next->prev = thr->prev;
+#if GGT_SUPP_JOIN
+                if (ggt_sem_trywait(&thr->joinLock)) {
+                    GGT_WAKE(thr->joined);
+                    ggt_sem_post(thr, &thr->joinLock);
+#endif
+
+#if GGT_SUPP_THREADS
+                    ggt_native_sem_wait(thr->lock);
+#endif
+                    thr->prev->next = thr->next;
+                    if (thr->next)
+                        thr->next->prev = thr->prev;
+#if GGT_SUPP_THREADS
+                    ggt_native_sem_post(thr->lock);
+#endif
+
+#if GGT_SUPP_JOIN
+                    ggt_sem_destroy(&thr->joinLock);
+                }
+#endif
             }
         }
     }
 }
+
+#if GGT_SUPP_JOIN
+#define GGT_JOIN(othr) do { \
+    GGT_SEM_WAIT(&(othr).joinLock); \
+    if ((othr).stack) { \
+        GGGGT_SLEEP_NY((othr).joined); \
+        ggt_sem_post(thr, &(othr).joinLock); \
+        stack->state = __LINE__-1; return; case __LINE__-1: \
+    } else { \
+        ggt_sem_post(thr, &(othr).joinLock); \
+    } \
+} while (0)
+#endif
 
 #endif

@@ -1,10 +1,19 @@
 #ifndef GGGGT_NATIVE_H
 #define GGGGT_NATIVE_H 1
 
-#include <pthread.h>
-#include <sched.h>
-#include <semaphore.h>
+#include <stdio.h>
 #include <stdlib.h>
+
+#include <pthread.h>
+#include "native-sem.h"
+
+#define GGT_GREEN 0
+
+#undef GGT_SUPP_THREADS
+#define GGT_SUPP_THREADS 1
+
+#undef GGT_SUPP_JOIN
+#define GGT_SUPP_JOIN 1
 
 #ifndef GGT_SUPP_EXCEPTIONS
 #define GGT_SUPP_EXCEPTIONS 1
@@ -20,14 +29,14 @@
 
 typedef struct ggt_thread_list_t {
     struct ggt_thread_t *next;
-    pthread_mutex_t lock[1];
+    ggt_native_sem_t lock[1];
 } ggt_thread_list_t;
 
 typedef struct ggt_thread_t {
     struct ggt_thread_t *next, *prev;
     pthread_t pth;
     sem_t sleep;
-    pthread_mutex_t *lock;
+    ggt_native_sem_t *lock;
 #if GGT_SUPP_EXCEPTIONS
     void *throw_;
     jmp_buf *catch_;
@@ -130,11 +139,15 @@ while (!(cond)) \
 
 #define GGT_INIT(list) do { \
     (list).next = NULL; \
-    pthread_mutex_init((list).lock, NULL); \
+    ggt_native_sem_init((list).lock, 1); \
+} while (0)
+
+#define GGT_FREE(list) do { \
+    ggt_native_sem_destroy((list).lock); \
 } while (0)
 
 #define GGT_SPAWN(list, thr, name, args) do { \
-    pthread_mutex_lock((list).lock); \
+    ggt_native_sem_wait((list).lock); \
     (thr).lock = (list).lock; \
     if ((list).next) { \
         (list).next->prev = &(thr); \
@@ -144,7 +157,7 @@ while (!(cond)) \
     } \
     (list).next = &(thr); \
     (thr).prev = (ggt_thread_t *) (void *) &(list); \
-    pthread_mutex_unlock((list).lock); \
+    ggt_native_sem_post((list).lock); \
     name args; \
 } while (0)
 
@@ -182,13 +195,13 @@ while (!(cond)) \
 #endif
 
 #define GGT_SLEEP(list) do { \
-    pthread_mutex_lock((thr).lock); \
+    ggt_native_sem_wait((thr).lock); \
     if (thr->prev) \
         thr->prev->next = thr->next; \
     if (thr->next) \
         thr->next->prev = thr->prev; \
-    pthread_mutex_unlock((thr).lock); \
-    pthread_mutex_lock((list).lock); \
+    ggt_native_sem_post((thr).lock); \
+    ggt_native_sem_wait((list).lock); \
     (thr).lock = (list).lock; \
     if ((list).next) { \
         (list).next->prev = thr; \
@@ -198,25 +211,25 @@ while (!(cond)) \
     } \
     (list).next = thr; \
     thr->prev = (ggt_thread_t *) (void *) &(list); \
-    pthread_mutex_unlock((list).lock); \
+    ggt_native_sem_post((list).lock); \
     sem_wait(&thr->sleep); \
 } while (0)
 
 #define GGT_WAKE_ONE(list) do { \
-    pthread_mutex_lock((list).lock); \
+    ggt_native_sem_wait((list).lock); \
     if ((list).next) { \
         ggt_thread_t *othr_ = (list).next; \
         (list).next = othr_->next; \
-        pthread_mutex_unlock((list).lock); \
-        pthread_mutex_lock((thr).lock); \
+        ggt_native_sem_post((list).lock); \
+        ggt_native_sem_wait((thr).lock); \
         othr_->lock = (thr).lock; \
         othr_->next = thr->next; \
         thr->next = othr_; \
         othr_->prev = thr; \
-        pthread_mutex_unlock((thr).lock); \
+        ggt_native_sem_post((thr).lock); \
         sem_post(&othr_->sleep); \
     } else { \
-        pthread_mutex_unlock((list).lock); \
+        ggt_native_sem_post((list).lock); \
     } \
 } while (0)
 
@@ -226,13 +239,13 @@ while (!(cond)) \
     } \
 } while (0)
 
-#define GGT_JOIN(thr) \
-    pthread_join((thr).pth, NULL)
-
 static void ggtRun(ggt_thread_list_t *list) {
     ggt_thread_t *thr;
     for (thr = list->next; thr; thr = thr->next)
         pthread_join(thr->pth, NULL);
 }
+
+#define GGT_JOIN(thr) \
+    pthread_join((thr).pth, NULL)
 
 #endif

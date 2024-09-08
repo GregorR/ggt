@@ -30,6 +30,8 @@ GGT(foo, (ggt_thread_t *thr, int *ret), {
         *l->ret += l->comp;
         GGT_YIELD();
     }
+
+    GGT_END();
 }
 ```
 
@@ -47,6 +49,8 @@ as `GGT`.
 (Note: The distinction between `GGT` and `GGT_E` actually only exists in the
 native-thread compatibility layer. If only using green threads, they're the
 same.)
+
+All `GGT` and `GGT_E` functions must end with `GGT_END();`.
 
 
 ## Control flow
@@ -173,6 +177,6 @@ GGT supports using the GGT API as a shim for native threads, by including
 Or, you can automatically use native threads if supported or green threads
 otherwise by including `"ggt/teal.h"`.
 
-It is not generally safe to mix and match green threads with native threads. If
-you run green threads only on one thread (or run them on multiple threads but
-without any interaction between them) it can be safe.
+You can use green threads on a platform that supports native threads. To use
+both at the same time, define `GGT_SUPP_THREADS` to `1` *before* including
+`"ggt/green.h"`. If you don't, green threads won't be threadsafe.

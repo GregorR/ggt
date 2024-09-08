@@ -2,7 +2,7 @@
 #define GGGGT_SEM_TYPES_H 1
 
 #if GGT_SUPP_THREADS
-#include "detect.h"
+#include "native/detect.h"
 #endif
 
 #if GGT_GREEN
@@ -15,7 +15,7 @@ typedef struct ggt_sem_t {
 } ggt_sem_t;
 
 #else /* !GGT_GREEN */
-#include "native-sem.h"
+#include "native/sem.h"
 typedef ggt_native_sem_t ggt_sem_t;
 
 #endif

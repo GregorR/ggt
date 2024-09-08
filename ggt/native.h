@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <pthread.h>
-#include "native-sem.h"
+#include "native/threads.h"
+#include "native/sem.h"
 
 #define GGT_GREEN 0
 
@@ -34,8 +34,8 @@ typedef struct ggt_thread_list_t {
 
 typedef struct ggt_thread_t {
     struct ggt_thread_t *next, *prev;
-    pthread_t pth;
-    sem_t sleep;
+    ggt_native_thread_t pth;
+    ggt_native_sem_t sleep;
     ggt_native_sem_t *lock;
 #if GGT_SUPP_EXCEPTIONS
     void *throw_;
@@ -70,42 +70,37 @@ void *name params { \
 struct name ## Locals locals; \
 struct name ## Arg { \
     ggt_thread_t *thr; \
-    sem_t threadReady; \
-    sem_t *localsReady; \
+    ggt_native_sem_t threadReady; \
+    ggt_native_sem_t *localsReady; \
     struct name ## Locals *l; \
 }; \
 void *name ## Runner(void *); \
 void name params { \
     struct name ## Arg arg; \
     struct name ## Locals *l; \
-    int pr; \
     arg.thr = thr; \
-    sem_init(&arg.threadReady, 0, 0); \
-    sem_init(&thr->sleep, 0, 0); \
+    ggt_native_sem_init(&arg.threadReady, 0); \
+    ggt_native_sem_init(&thr->sleep, 0); \
     GGGGT_EXC_INIT_THR(thr); \
-    pr = pthread_create(&thr->pth, NULL, name ## Runner, (void *) &arg); \
-    if (pr != 0) { \
-        perror("pthread_create"); \
-        exit(1); \
-    } \
-    sem_wait(&arg.threadReady); \
-    sem_destroy(&arg.threadReady); \
+    ggt_native_thread_create(&thr->pth, name ## Runner, (void *) &arg); \
+    ggt_native_sem_wait(&arg.threadReady); \
+    ggt_native_sem_destroy(&arg.threadReady); \
     l = arg.l; \
     trans \
-    sem_post(arg.localsReady); \
+    ggt_native_sem_post(arg.localsReady); \
 } \
 void *name ## Runner(void *argP) { \
     struct name ## Arg *arg = (struct name ## Arg *) argP; \
     ggt_thread_t *thr = arg->thr; \
     struct name ## Locals l_, *l; \
     GGGGT_EXC_LOCALS(); \
-    sem_t localsReady; \
+    ggt_native_sem_t localsReady; \
     arg->l = l = &l_; \
-    sem_init(&localsReady, 0, 0); \
+    ggt_native_sem_init(&localsReady, 0); \
     arg->localsReady = &localsReady; \
-    sem_post(&arg->threadReady); \
-    sem_wait(&localsReady); \
-    sem_destroy(&localsReady);
+    ggt_native_sem_post(&arg->threadReady); \
+    ggt_native_sem_wait(&localsReady); \
+    ggt_native_sem_destroy(&localsReady);
 
 #if GGT_SUPP_EXCEPTIONS
 #define GGT_RETURN() do { \
@@ -121,7 +116,7 @@ void *name ## Runner(void *argP) { \
     GGT_RETURN(); \
 }
 
-#define GGT_YIELD() sched_yield()
+#define GGT_YIELD() ggt_native_thread_yield()
 
 #define GGT_YIELD_UNTIL(cond) \
 while (!(cond)) \
@@ -179,7 +174,7 @@ while (!(cond)) \
     if (thr->catch_) \
         longjmp(*thr->catch_, 1); \
     else \
-        pthread_exit(NULL); \
+        ggt_native_thread_exit(); \
     return NULL; \
 } while (0)
 #endif
@@ -212,7 +207,7 @@ while (!(cond)) \
     (list).next = thr; \
     thr->prev = (ggt_thread_t *) (void *) &(list); \
     ggt_native_sem_post((list).lock); \
-    sem_wait(&thr->sleep); \
+    ggt_native_sem_wait(&thr->sleep); \
 } while (0)
 
 #define GGT_WAKE_ONE(list) do { \
@@ -227,7 +222,7 @@ while (!(cond)) \
         thr->next = othr_; \
         othr_->prev = thr; \
         ggt_native_sem_post((thr).lock); \
-        sem_post(&othr_->sleep); \
+        ggt_native_sem_post(&othr_->sleep); \
     } else { \
         ggt_native_sem_post((list).lock); \
     } \
@@ -242,10 +237,10 @@ while (!(cond)) \
 static void ggtRun(ggt_thread_list_t *list) {
     ggt_thread_t *thr;
     for (thr = list->next; thr; thr = thr->next)
-        pthread_join(thr->pth, NULL);
+        ggt_native_thread_join(&(thr->pth));
 }
 
 #define GGT_JOIN(thr) \
-    pthread_join((thr).pth, NULL)
+    ggt_native_thread_join(&((thr).pth))
 
 #endif

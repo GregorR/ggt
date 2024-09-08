@@ -22,12 +22,12 @@
 #endif
 
 #if GGT_SUPP_THREADS
-#include "detect.h"
+#include "native/detect.h"
 #if !GGGGT_THREADS_NATIVE
 #undef GGT_SUPP_THREADS
 #define GGT_SUPP_THREADS 0
 #else
-#include "native-sem.h"
+#include "native/sem.h"
 #endif
 #endif
 

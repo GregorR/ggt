@@ -4,13 +4,13 @@
 #include "detect.h"
 
 #if GGGGT_THREADS_MACOSX
-#include "native-sem/macosx.h"
+#include "sem-macosx.h"
 
 #elif GGGGT_THREADS_POSIX
-#include "native-sem/posix.h"
+#include "sem-posix.h"
 
 #elif GGGGT_THREADS_WINDOWS
-#include "native-sem/windows.h"
+#include "sem-windows.h"
 
 #endif
 

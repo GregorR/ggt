@@ -25,7 +25,7 @@
 
 #include <windows.h>
 
-#include <sys/types.h>
+#include <limits.h>
 
 typedef HANDLE ggt_native_sem_t;
 

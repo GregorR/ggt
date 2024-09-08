@@ -159,7 +159,7 @@ void name ## Runner(ggt_thread_t *thr) { \
     struct name ## Locals *l = \
         (struct name ## Locals *) (void *) (stack + 1); \
     switch (stack->state) { \
-        case GGGGT_STATE_INIT:
+        case GGGGT_STATE_INIT: (void) 0;
 
 #define GGT_E(name, params, locals, trans) \
     GGT(name, params, locals, trans)
@@ -175,11 +175,11 @@ void name ## Runner(ggt_thread_t *thr) { \
 }
 
 #define GGT_YIELD() do { \
-    stack->state = __LINE__; return; case __LINE__: \
+    stack->state = __LINE__; return; case __LINE__: (void) 0; \
 } while (0)
 
 #define GGT_SAVE(to) do { \
-    (to) = __LINE__; case __LINE__: \
+    (to) = __LINE__; case __LINE__: (void) 0; \
 } while (0)
 
 #define GGT_RESUME(from) do { \
@@ -201,7 +201,7 @@ while (!(cond)) \
 #endif
 
 #define GGT_CALL(name, args) do { \
-    stack->state = __LINE__; stackNext = name args; if (GGGGT_EXC_CALL_DONE(stackNext)) return; thr->stack = stack; free(stackNext); case __LINE__: \
+    stack->state = __LINE__; stackNext = name args; if (GGGGT_EXC_CALL_DONE(stackNext)) return; thr->stack = stack; free(stackNext); case __LINE__: (void) 0; \
 } while (0)
 
 #define GGT_INIT(list) do { \
@@ -350,6 +350,7 @@ while (!(cond)) \
 
 static void ggtRun(ggt_thread_list_t *list) {
     ggt_thread_t *thr, *nthr;
+    ggt_stack_t *stack;
     while (list->next) {
         for (thr = list->next; thr; thr = nthr) {
 #if GGT_SUPP_THREADS
@@ -360,7 +361,7 @@ static void ggtRun(ggt_thread_list_t *list) {
             ggt_native_sem_post(thr->lock);
 #endif
 
-            ggt_stack_t *stack = thr->stack;
+            stack = thr->stack;
             if (stack) {
 #if GGT_SUPP_EXCEPTIONS || GGT_SUPP_SJLJ
                 if (thr->throw_) {
@@ -410,7 +411,7 @@ static void ggtRun(ggt_thread_list_t *list) {
     if ((othr).stack) { \
         GGGGT_SLEEP_NY((othr).joined); \
         ggt_sem_post(thr, &(othr).joinLock); \
-        stack->state = __LINE__-1; return; case __LINE__-1: \
+        stack->state = __LINE__-1; return; case __LINE__-1: (void) 0; \
     } else { \
         ggt_sem_post(thr, &(othr).joinLock); \
     } \

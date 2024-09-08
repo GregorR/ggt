@@ -22,7 +22,11 @@
 
 #include <stdio.h>
 
+#ifdef GGT_TEAL
 #include "ggt/teal.h"
+#else
+#include "ggt/green.h"
+#endif
 
 ggt_jmpbuf_t jb;
 
@@ -32,7 +36,6 @@ GGT(printer, (ggt_thread_t *thr, const char *toPrint), {
     l->toPrint = toPrint;
 }) {
     printf("%s\n", l->toPrint);
-    GGT_THROW((void *) 1);
     GGT_END();
 }
 
@@ -52,6 +55,7 @@ GGT_E(a, (ggt_thread_t *thr), {
         GGT_YIELD();
     }
 
+    GGT_THROW((void *) 1);
     GGT_END();
 }
 

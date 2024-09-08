@@ -20,19 +20,73 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef GGGGT_NATIVE_SEM_WINDOWS_H
-#define GGGGT_NATIVE_SEM_WINDOWS_H 1
+#include <stdio.h>
 
-#include <windows.h>
+#include "ggt/teal.h"
 
-#include <sys/types.h>
+ggt_jmpbuf_t jb;
 
-typedef HANDLE ggt_native_sem_t;
+GGT(printer, (ggt_thread_t *thr, const char *toPrint), {
+    const char *toPrint;
+}, {
+    l->toPrint = toPrint;
+}) {
+    printf("%s\n", l->toPrint);
+    GGT_THROW((void *) 1);
+    GGT_END();
+}
 
-#define ggt_native_sem_init(sem, ct) (*(sem)=CreateSemaphore(NULL,(ct),INT_MAX,NULL))
-#define ggt_native_sem_destroy(sem) (CloseHandle(*(sem)))
-#define ggt_native_sem_post(sem) (ReleaseSemaphore(*(sem),1,NULL))
-#define ggt_native_sem_wait(sem) (WaitForSingleObject(*(sem),INFINITE))
-#define ggt_native_sem_trywait(sem) ((WaitForSingleObject(*(sem),0)==WAIT_FAILED)?-1:0)
+GGT_E(a, (ggt_thread_t *thr), {
+    int val;
+}, {
+}) {
+    GGT_CATCH(ex, {
+        printf("Catch!\n");
+    });
 
-#endif
+    l->val = 0;
+    while (l->val < 4096) {
+        printf("Thread a (%d)\n", l->val++);
+        l->val++;
+        GGT_CALL(printer, (thr, "Hello, world!"));
+        GGT_YIELD();
+    }
+
+    GGT_END();
+}
+
+GGT_E(b, (ggt_thread_t *thr), {
+    int val;
+    ggt_thread_t othr;
+}, {
+}) {
+    GGT_SETJMP(jb, {
+        printf("I sure do enjoy setjmp\n");
+        GGT_RETURN();
+    });
+
+    l->val = 1024;
+    GGT_SPAWN(*thr, l->othr, a, (&l->othr));
+    while (l->val < 4096) {
+        printf("Thread b (%d)\n", l->val++);
+        l->val++;
+        GGT_YIELD();
+    }
+
+    GGT_JOIN(l->othr);
+
+    GGT_LONGJMP(jb);
+
+    GGT_END();
+}
+
+int main() {
+    ggt_thread_list_t list;
+    ggt_thread_t thrA, thrB;
+    GGT_INIT(list);
+    GGT_SPAWN(list, thrA, a, (&thrA));
+    GGT_SPAWN(list, thrB, b, (&thrB));
+    ggtRun(&list);
+    GGT_FREE(list);
+    return 0;
+}

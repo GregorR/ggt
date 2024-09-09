@@ -99,7 +99,8 @@ including `"ggt/green.h"`.
 
 To spawn the initial threads (i.e., to spawn a thread from a non-green-thread
 environment), use a `ggt_thread_list_t` as the parent, using `GGT_INIT` to
-initialize it. Then, use `ggtRun` to execute green threads.
+initialize it. Then, use `ggtRun` to execute green threads. Use `GGT_FREE` to
+free the resources associated with the thread list.
 
 ```c
 int main() {
@@ -108,6 +109,7 @@ int main() {
     GGT_INIT(list);
     GGT_SPAWN(list, thr, bar, (&thr));
     ggtRun(&list);
+    GGT_FREE(list);
     return 0;
 }
 ```
@@ -177,15 +179,27 @@ to `GGT_RETURN` if you want to leave the surrounding function.
 
 ## Native and “Teal” Threads
 
-GGT supports using the GGT API as a shim for native threads, by including
-`"ggt/native.h"` instead of `"ggt/green.h"`.
+GGT supports two other thread-like layers: “teal” threads and native threads.
 
-Or, you can automatically use native threads if supported or green threads
-otherwise by including `"ggt/teal.h"`.
+Teal threads are a tongue-in-cheek name for threads implemented by explicitly
+allocating stack space, then using `setjmp`/`longjmp` to context switch. Because
+of the need to explicitly allocate stack space, teal threads are only available
+on certain systems (only where context-switching assembly code has been built
+in). Include `"ggt/teal.h"` instead of `"ggt/green.h"` to use teal threads.
 
-You can use green threads on a platform that supports native threads. To use
-both at the same time, define `GGT_SUPP_THREADS` to `1` *before* including
-`"ggt/green.h"`. If you don't, green threads won't be threadsafe.
+To use native threads, but with the GGT API, include `"ggt/native.h"` instead of
+`"ggt/green.h"`.
+
+You can automatically use the best supported threading mechanism (where “best”
+is defined as native > teal > green) by including `"ggt/best.h"`. If you want to
+use the best mechanism but specifically exclude native or teal threads from
+consideration, you can set `GGT_SUPP_NATIVE` to `0` or `GGT_SUPP_TEAL` to `0`
+before including `"ggt/best.h"`.
+
+You can use green and teal threads on platforms that support native threads. To
+use both at the same time, define `GGT_SUPP_THREADS` to `1` before including
+GGT. If you don't, green/teal threads won't be threadsafe with respect to native
+threads.
 
 
 ## Semaphores

@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads
+ * POSIX native semaphores
+ */
+
 #ifndef GGGGT_NATIVE_SEM_POSIX_H
 #define GGGGT_NATIVE_SEM_POSIX_H 1
 

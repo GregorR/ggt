@@ -1,3 +1,8 @@
+/*
+ * Gregor's Green Threads
+ * Native threading API
+ */
+
 #ifndef GGGGT_NATIVE_THREADS_H
 #define GGGGT_NATIVE_THREADS_H 1
 

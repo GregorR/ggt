@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads.
+ * Main green threads implementation.
+ */
+
 #ifndef GGGGT_GREEN_H
 #define GGGGT_GREEN_H 1
 

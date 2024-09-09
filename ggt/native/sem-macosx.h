@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads
+ * Mac OS (X) native semaphores
+ */
+
 #ifndef GGGGT_NATIVE_SEM_MACOSX_H
 #define GGGGT_NATIVE_SEM_MACOSX_H 1
 

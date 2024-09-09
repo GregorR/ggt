@@ -1,3 +1,8 @@
+/*
+ * Gregor's Green Threads
+ * Native semaphores
+ */
+
 #ifndef GGGGT_NATIVE_SEM_H
 #define GGGGT_NATIVE_SEM_H 1
 

@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads
+ * Windows native semaphores
+ */
+
 #ifndef GGGGT_NATIVE_SEM_WINDOWS_H
 #define GGGGT_NATIVE_SEM_WINDOWS_H 1
 

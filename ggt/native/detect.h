@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads
+ * Detection of native threading capabilities.
+ */
+
 #ifndef GGGGT_NATIVE_DETECT_H
 #define GGGGT_NATIVE_DETECT_H 1
 

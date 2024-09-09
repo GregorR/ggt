@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads.
+ * Semaphores for GGT.
+ */
+
 #ifndef GGGGT_SEM_H
 #define GGGGT_SEM_H 1
 

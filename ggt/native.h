@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads.
+ * Wrapper to use native threads with GGT macros.
+ */
+
 #ifndef GGGGT_NATIVE_H
 #define GGGGT_NATIVE_H 1
 

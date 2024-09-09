@@ -20,6 +20,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Gregor's Green Threads
+ * Windows native threads
+ */
+
 #ifndef GGT_NATIVE_THREADS_WINDOWS_H
 #define GGT_NATIVE_THREADS_WINDOWS_H 1
 

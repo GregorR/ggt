@@ -83,9 +83,8 @@ typedef jmp_buf ggt_jmpbuf_t;
 
 #define GGT(name, params, locals, trans) \
 void *name params { \
-    struct locals l_, *l; \
+    struct locals l[1]; \
     GGGGT_EXC_LOCALS(); \
-    l = &l_; \
     trans
 
 #define GGT_E(name, params, locals, trans) \
@@ -114,10 +113,10 @@ void name params { \
 void *name ## Runner(void *argP) { \
     struct name ## Arg *arg = (struct name ## Arg *) argP; \
     ggt_thread_t *thr = arg->thr; \
-    struct name ## Locals l_, *l; \
+    struct name ## Locals l[1]; \
     GGGGT_EXC_LOCALS(); \
     ggt_native_sem_t localsReady; \
-    arg->l = l = &l_; \
+    arg->l = l; \
     ggt_native_sem_init(&localsReady, 0); \
     arg->localsReady = &localsReady; \
     ggt_native_sem_post(&arg->threadReady); \

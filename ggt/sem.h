@@ -30,7 +30,7 @@ static void ggt_sem_init(ggt_sem_t *sem, unsigned int val) {
     GGT_INIT(sem->waiting);
     sem->val = val;
 #if GGT_SUPP_THREADS
-    pthread_mutex_init(sem->lock, NULL);
+    ggt_native_sem_init(sem->lock, 1);
 #endif
 }
 
@@ -40,30 +40,30 @@ static void ggt_sem_destroy(ggt_sem_t *sem) {
 
 static void ggt_sem_post(ggt_thread_t *thr, ggt_sem_t *sem) {
 #if GGT_SUPP_THREADS
-    pthread_mutex_lock(sem->lock);
+    ggt_native_sem_wait(sem->lock);
 #endif
     if (sem->waiting.next)
         GGT_WAKE_ONE(sem->waiting);
     else
         sem->val++;
 #if GGT_SUPP_THREADS
-    pthread_mutex_unlock(sem->lock);
+    ggt_native_sem_post(sem->lock);
 #endif
 }
 
 #define GGT_SEM_WAIT(sem) do { \
     GGGGT_IF_THREADS({ \
-        pthread_mutex_lock((sem)->lock); \
+        ggt_native_sem_wait((sem)->lock); \
     }); \
     if ((sem)->val) { \
         (sem)->val--; \
         GGGGT_IF_THREADS({ \
-            pthread_mutex_unlock((sem)->lock); \
+            ggt_native_sem_post((sem)->lock); \
         }); \
     } else { \
         GGGGT_SLEEP_NY((sem)->waiting); \
         GGGGT_IF_THREADS({ \
-            pthread_mutex_unlock((sem)->lock); \
+            ggt_native_sem_post((sem)->lock); \
         }); \
         GGT_YIELD(); \
     } \
@@ -71,17 +71,17 @@ static void ggt_sem_post(ggt_thread_t *thr, ggt_sem_t *sem) {
 
 static int ggt_sem_trywait(ggt_sem_t *sem) {
 #if GGT_SUPP_THREADS
-    pthread_mutex_lock(sem->lock);
+    ggt_native_sem_wait(sem->lock);
 #endif
     if (sem->val) {
         sem->val--;
 #if GGT_SUPP_THREADS
-        pthread_mutex_unlock(sem->lock);
+        ggt_native_sem_post(sem->lock);
 #endif
         return 0;
     } else {
 #if GGT_SUPP_THREADS
-        pthread_mutex_unlock(sem->lock);
+        ggt_native_sem_post(sem->lock);
 #endif
         return -1;
     }

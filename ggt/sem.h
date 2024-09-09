@@ -66,11 +66,11 @@ static void ggt_sem_post(ggt_thread_t *thr, ggt_sem_t *sem) {
             ggt_native_sem_post((sem)->lock); \
         }); \
     } else { \
-        GGGGT_SLEEP_NY((sem)->waiting); \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post((sem)->lock); \
+        GGGGT_SLEEP_B((sem)->waiting, 0, { \
+            GGGGT_IF_THREADS({ \
+                ggt_native_sem_post((sem)->lock); \
+            }); \
         }); \
-        GGT_YIELD(); \
     } \
 } while (0)
 

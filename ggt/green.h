@@ -251,7 +251,7 @@ while (!(cond)) \
     name args; \
 } while (0)
 
-#define GGGGT_SLEEP_NY(list) do { \
+#define GGGGT_SLEEP_B(list, yieldOffset, block) do { \
     GGGGT_IF_THREADS({ \
         ggt_native_sem_wait(thr->lock); \
     }); \
@@ -275,11 +275,12 @@ while (!(cond)) \
     GGGGT_IF_THREADS({ \
         ggt_native_sem_post((list).lock); \
     }); \
+    block \
+    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: 0; \
 } while (0)
 
 #define GGT_SLEEP(list) do { \
-    GGGGT_SLEEP_NY(list); \
-    GGT_YIELD(); \
+    GGGGT_SLEEP_B(list, 0, {}); \
 } while (0)
 
 #define GGT_WAKE_ONE(list) do { \
@@ -415,9 +416,9 @@ static void ggtRun(ggt_thread_list_t *list) {
 #define GGT_JOIN(othr) do { \
     GGT_SEM_WAIT(&(othr).joinLock); \
     if ((othr).stack) { \
-        GGGGT_SLEEP_NY((othr).joined); \
-        ggt_sem_post(thr, &(othr).joinLock); \
-        stack->state = __LINE__-1; return; case __LINE__-1: (void) 0; \
+        GGGGT_SLEEP_B((othr).joined, 1, { \
+            ggt_sem_post(thr, &(othr).joinLock); \
+        }); \
     } else { \
         ggt_sem_post(thr, &(othr).joinLock); \
     } \

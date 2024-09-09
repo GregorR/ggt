@@ -163,8 +163,8 @@ static void name ## Real(ggt_thread_t *thr, struct name ## Locals *l) { \
 
 #if GGT_SUPP_EXCEPTIONS
 #define GGT_RETURN() do { \
-    if (thr->catch_) \
-        longjmp(*thr->catch_, 1); \
+    if (thr->catch_ == &catch_) \
+        longjmp(catch_, 1); \
     return; \
 } while (0)
 #else
@@ -234,11 +234,13 @@ while (!(cond)) \
 
 #define GGT_THROW(ex) do { \
     thr->throw_ = (ex); \
-    if (thr->catch_) \
-        longjmp(*thr->catch_, 1); \
-    else \
-        ggggtExit(thr); \
-    return; \
+    if (thr->throw_) { \
+        if (thr->catch_) \
+            longjmp(*thr->catch_, 1); \
+        else \
+            ggggtExit(thr); \
+    } \
+    GGT_RETURN(); \
 } while (0)
 #endif
 

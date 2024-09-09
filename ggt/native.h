@@ -199,11 +199,13 @@ while (!(cond)) \
 
 #define GGT_THROW(ex) do { \
     thr->throw_ = (ex); \
-    if (thr->catch_) \
-        longjmp(*thr->catch_, 1); \
-    else \
-        ggt_native_thread_exit(); \
-    return NULL; \
+    if (thr->throw_) { \
+        if (thr->catch_) \
+            longjmp(*thr->catch_, 1); \
+        else \
+            ggt_native_thread_exit(); \
+    } \
+    GGT_RETURN(); \
 } while (0)
 #endif
 

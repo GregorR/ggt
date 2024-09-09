@@ -22,11 +22,7 @@
 
 #include <stdio.h>
 
-#ifdef GGT_TEAL
-#include "ggt/teal.h"
-#else
-#include "ggt/green.h"
-#endif
+#include "ggt/best.h"
 
 ggt_jmpbuf_t jb;
 

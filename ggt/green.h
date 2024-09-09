@@ -32,6 +32,8 @@
 #include <stdlib.h>
 
 #define GGT_GREEN 1
+#define GGT_TEAL 0
+#define GGT_NATIVE 0
 
 #ifndef GGT_SUPP_THREADS
 #define GGT_SUPP_THREADS 0
@@ -224,7 +226,6 @@ while (!(cond)) \
 
 #define GGT_SPAWN(list, thr, name, args) do { \
     (thr).stack = NULL; \
-    GGT_INIT((thr).joined); \
     GGGGT_IF_JOIN({ \
         ggt_sem_init(&(thr).joinLock, 1); \
         GGT_INIT((thr).joined); \

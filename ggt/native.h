@@ -35,6 +35,8 @@
 #include "native/sem.h"
 
 #define GGT_GREEN 0
+#define GGT_TEAL 0
+#define GGT_NATIVE 1
 
 #undef GGT_SUPP_THREADS
 #define GGT_SUPP_THREADS 1

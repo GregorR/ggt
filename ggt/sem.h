@@ -30,7 +30,7 @@
 
 #include "sem-types.h"
 
-#if GGT_GREEN
+#if !GGT_NATIVE
 static void ggt_sem_init(ggt_sem_t *sem, unsigned int val) {
     GGT_INIT(sem->waiting);
     sem->val = val;
@@ -92,7 +92,7 @@ static int ggt_sem_trywait(ggt_sem_t *sem) {
     }
 }
 
-#else /* !GGT_GREEN */
+#else /* GGT_NATIVE */
 #define ggt_sem_init(sem, val) ggt_native_sem_init((sem), (val))
 #define ggt_sem_destroy(sem) ggt_native_sem_destroy((sem))
 #define ggt_sem_post(thr, sem) ggt_native_sem_post((sem))

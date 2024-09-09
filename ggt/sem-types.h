@@ -32,7 +32,7 @@
 #include "native/sem.h"
 #endif
 
-#if GGT_GREEN
+#if !GGT_NATIVE
 typedef struct ggt_sem_t {
     ggt_thread_list_t waiting;
     unsigned int val;
@@ -41,7 +41,7 @@ typedef struct ggt_sem_t {
 #endif
 } ggt_sem_t;
 
-#else /* !GGT_GREEN */
+#else /* GGT_NATIVE */
 typedef ggt_native_sem_t ggt_sem_t;
 
 #endif

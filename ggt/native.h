@@ -102,7 +102,7 @@ struct name ## Arg { \
     ggt_native_sem_t *localsReady; \
     struct name ## Locals *l; \
 }; \
-void *name ## Runner(void *); \
+static void *name ## Runner(void *); \
 void name params { \
     struct name ## Arg arg; \
     struct name ## Locals *l; \
@@ -117,7 +117,7 @@ void name params { \
     trans \
     ggt_native_sem_post(arg.localsReady); \
 } \
-void *name ## Runner(void *argP) { \
+static void *name ## Runner(void *argP) { \
     struct name ## Arg *arg = (struct name ## Arg *) argP; \
     ggt_thread_t *thr = arg->thr; \
     struct name ## Locals l[1]; \

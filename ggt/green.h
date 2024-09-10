@@ -140,7 +140,7 @@ typedef struct ggt_jmpbuf_t {
 
 #define GGT(name, params, locals, trans) \
 struct name ## Locals locals; \
-void name ## Runner(ggt_thread_t *); \
+static void name ## Runner(ggt_thread_t *); \
 ggt_stack_t *name params { \
     ggt_stack_t *stack; \
     struct name ## Locals *l; \
@@ -161,7 +161,7 @@ ggt_stack_t *name params { \
     name ## Runner(thr); \
     return stack; \
 } \
-void name ## Runner(ggt_thread_t *thr) { \
+static void name ## Runner(ggt_thread_t *thr) { \
     ggt_stack_t *stack = thr->stack, *stackNext; \
     struct name ## Locals *l = \
         (struct name ## Locals *) (void *) (stack + 1); \

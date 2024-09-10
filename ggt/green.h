@@ -168,8 +168,7 @@ void name ## Runner(ggt_thread_t *thr) { \
     switch (stack->state) { \
         case GGGGT_STATE_INIT: (void) 0;
 
-#define GGT_E(name, params, locals, trans) \
-    GGT(name, params, locals, trans)
+#define GGT_E GGT
 
 #define GGT_RETURN() do { \
     stack->state = GGGGT_STATE_DONE; \
@@ -276,7 +275,7 @@ while (!(cond)) \
         ggt_native_sem_post((list).lock); \
     }); \
     block \
-    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: 0; \
+    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: (void) 0; \
 } while (0)
 
 #define GGT_SLEEP(list) do { \

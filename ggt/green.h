@@ -184,15 +184,6 @@ static void name ## Runner(ggt_thread_t *thr) { \
     stack->state = __LINE__; return; case __LINE__: (void) 0; \
 } while (0)
 
-#define GGT_SAVE(to) do { \
-    (to) = __LINE__; case __LINE__: (void) 0; \
-} while (0)
-
-#define GGT_RESUME(from) do { \
-    stack->state = (from); \
-    return; \
-} while (0)
-
 #define GGT_YIELD_UNTIL(cond) \
 while (!(cond)) \
     GGT_YIELD()

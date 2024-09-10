@@ -201,6 +201,14 @@ use both at the same time, define `GGT_SUPP_THREADS` to `1` before including
 GGT. If you don't, green/teal threads won't be threadsafe with respect to native
 threads.
 
+Green threads are a tradeoff between time and space efficiency. GGT green
+threads use heap allocation for stack frames, which is less time efficient, but
+means that threads that use little stack don't hold up a large stack space. GGT
+teal threads use a more normal stack, and so are less lightweight, but have
+better performance. Of course, they don't take advantage of real concurrency.
+Consider these tradeoffs when choosing an appropriate threading model (if you
+have the choice).
+
 
 ## Semaphores
 

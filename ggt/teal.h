@@ -85,6 +85,7 @@
 typedef struct ggt_thread_list_t {
     struct ggt_thread_t *prev, *next;
     jmp_buf ctx;
+    void **cleanup[1];
 #if GGT_SUPP_THREADS
     ggt_native_sem_t lock[1];
 #endif
@@ -97,6 +98,7 @@ typedef struct ggt_thread_list_t {
 typedef struct ggt_thread_t {
     struct ggt_thread_t *prev, *next;
     jmp_buf ctx;
+    void ***cleanup;
     unsigned char *stack;
 #if GGT_SUPP_THREADS
     ggt_native_sem_t *lock;
@@ -188,6 +190,7 @@ while (!(cond)) \
 
 #define GGT_INIT(list) do { \
     (list).next = NULL; \
+    *(list).cleanup = NULL; \
     GGGGT_IF_THREADS({ \
         ggt_native_sem_init((list).lock, 1); \
     }); \
@@ -200,6 +203,7 @@ while (!(cond)) \
         ggt_native_sem_wait((list).lock); \
         (thr).lock = (list).lock; \
     }); \
+    (thr).cleanup = (list).cleanup; \
     GGGGT_IF_JOIN({ \
         ggt_sem_init(&(thr).joinLock, 1); \
         GGT_INIT((thr).joined); \
@@ -324,13 +328,21 @@ while (!(cond)) \
 #endif
 
 static void ggtRun(ggt_thread_list_t *list) {
+    void **cleanup;
     while (list->next != (ggt_thread_t *) (void *) list) {
         if (setjmp(list->ctx) == 0)
             longjmp(list->next->ctx, 1);
+        while (*list->cleanup) {
+            cleanup = (*list->cleanup)[0];
+            free(*list->cleanup);
+            *list->cleanup = cleanup;
+        }
     }
 }
 
 static void ggggtExit(ggt_thread_t *thr) {
+    void **cleanup;
+
 #if GGT_SUPP_JOIN
     GGT_SEM_WAIT(&thr->joinLock);
     GGT_WAKE(thr->joined);
@@ -347,8 +359,10 @@ static void ggggtExit(ggt_thread_t *thr) {
 #if GGT_SUPP_JOIN
     ggt_sem_destroy(&thr->joinLock);
 #endif
-    /* FIXME: Zapping our own stack! */
-    free(thr->stack);
+
+    cleanup = (void **) (void *) thr->stack;
+    cleanup[0] = *thr->cleanup;
+    *thr->cleanup = cleanup;
     thr->stack = NULL;
     longjmp(thr->next->ctx, 1);
 }

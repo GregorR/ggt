@@ -138,6 +138,9 @@ void name params { \
 
 static void ggggtExit(ggt_thread_t *thr);
 
+#define GGGGT_RUP(x) \
+    (((x) + 2*sizeof(void *) - 1) / (2*sizeof(void *)) * (2*sizeof(void *)))
+
 #define GGT_E(name, params, locals, trans) \
 struct name ## Locals locals; \
 static void name ## Runner(ggt_thread_t *, void *); \
@@ -150,7 +153,8 @@ void name params { \
         exit(1); \
     } \
     l = (struct name ## Locals *) \
-        (thr->stack + GGGGT_STACK_SZ - sizeof(struct name ## Locals)); \
+        (thr->stack + GGGGT_STACK_SZ - \
+         GGGGT_RUP(sizeof(struct name ## Locals))); \
     GGGGT_IF_EXCEPTIONS({ \
         thr->throw_ = NULL; \
         thr->catch_ = NULL; \

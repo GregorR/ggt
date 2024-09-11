@@ -63,8 +63,10 @@
 
 #if GGT_SUPP_THREADS
 #define GGGGT_IF_THREADS(block) do block while(0)
+#define GGGGT_THR(x) x ## Thr
 #else
 #define GGGGT_IF_THREADS(block)
+#define GGGGT_THR(x) x
 #endif
 
 #if GGT_SUPP_JOIN
@@ -201,18 +203,15 @@ while (!(cond)) \
     stack->state = __LINE__; stackNext = name args; if (GGGGT_EXC_CALL_DONE(stackNext)) return; thr->stack = stack; free(stackNext); case __LINE__: (void) 0; \
 } while (0)
 
-#define GGT_INIT(list) do { \
-    (list).next = NULL; \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_init((list).lock, 1); \
-    }); \
-} while (0)
+void GGGGT_THR(ggggtGreenInit)(ggt_thread_list_t *);
+#define GGT_INIT(list) GGGGT_THR(ggggtGreenInit)(&(list))
 
-#define GGT_FREE(list) do { \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_destroy((list).lock); \
-    }); \
-} while (0)
+#if GGT_SUPP_THREADS
+void ggggtGreenFreeThr(ggt_thread_list_t *);
+#define GGT_FREE(list) ggggtGreenFreeThr(&(list))
+#else
+#define GGT_FREE(list) do {} while (0)
+#endif
 
 #define GGT_SPAWN(list, thr, name, args) do { \
     (thr).stack = NULL; \
@@ -241,70 +240,23 @@ while (!(cond)) \
     name args; \
 } while (0)
 
+void GGGGT_THR(ggggtGreenSleep)(ggt_thread_list_t *, ggt_thread_t *);
+#define GGGGT_SLEEP(list) GGGGT_THR(ggggtGreenSleep)(&(list), thr)
+
 #define GGGGT_SLEEP_B(list, yieldOffset, block) do { \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_wait(thr->lock); \
-    }); \
-    if (thr->prev) \
-        thr->prev->next = thr->next; \
-    if (thr->next) \
-        thr->next->prev = thr->prev; \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_post(thr->lock); \
-        ggt_native_sem_wait((list).lock); \
-        thr->lock = (list).lock; \
-    }); \
-    if ((list).next) { \
-        (list).next->prev = thr; \
-        thr->next = (list).next; \
-    } else { \
-        thr->next = NULL; \
-    } \
-    (list).next = thr; \
-    thr->prev = (ggt_thread_t *) (void *) &(list); \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_post((list).lock); \
-    }); \
+    GGGGT_SLEEP(list); \
     block \
-    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: (void) 0; \
+    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: 0; \
 } while (0)
 
 #define GGT_SLEEP(list) do { \
     GGGGT_SLEEP_B(list, 0, {}); \
 } while (0)
 
-#define GGT_WAKE_ONE(list) do { \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_wait((list).lock); \
-    }); \
-    if ((list).next) { \
-        ggt_thread_t *othr_ = (list).next; \
-        (list).next = othr_->next; \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post((list).lock); \
-            ggt_native_sem_wait(thr->lock); \
-            othr_->lock = thr->lock; \
-        }); \
-        if (thr->next) \
-            thr->next->prev = othr_; \
-        othr_->next = thr->next; \
-        thr->next = othr_; \
-        othr_->prev = thr; \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post(thr->lock); \
-        }); \
-    } else { \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post((list).lock); \
-        }); \
-    } \
-} while (0)
-
-#define GGT_WAKE(list) do { \
-    while ((list).next) { \
-        GGT_WAKE_ONE(list); \
-    } \
-} while (0)
+void GGGGT_THR(ggggtGreenWakeOne)(ggt_thread_list_t *, ggt_thread_t *);
+#define GGT_WAKE_ONE(list) GGGGT_THR(ggggtGreenWakeOne)(&(list), thr)
+void GGGGT_THR(ggggtGreenWake)(ggt_thread_list_t *, ggt_thread_t *);
+#define GGT_WAKE(list) GGGGT_THR(ggggtGreenWake)(&(list), thr)
 
 #if GGT_SUPP_EXCEPTIONS
 #define GGT_CATCH(ex, block) do { \

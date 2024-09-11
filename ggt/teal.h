@@ -66,8 +66,10 @@
 
 #if GGT_SUPP_THREADS
 #define GGGGT_IF_THREADS(block) do block while(0)
+#define GGGGT_THR(x) x ## Thr
 #else
 #define GGGGT_IF_THREADS(block)
+#define GGGGT_THR(x) x
 #endif
 
 #if GGT_SUPP_JOIN
@@ -188,15 +190,15 @@ while (!(cond)) \
 
 #define GGT_CALL(name, args) name args
 
-#define GGT_INIT(list) do { \
-    (list).next = NULL; \
-    *(list).cleanup = NULL; \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_init((list).lock, 1); \
-    }); \
-} while (0)
+void GGGGT_THR(ggggtTealInit)(ggt_thread_list_t *);
+#define GGT_INIT(list) GGGGT_THR(ggggtTealInit)(&(list))
 
-#define GGT_FREE(list)
+#if GGT_SUPP_THREADS
+void ggggtTealFreeThr(ggt_thread_list_t *list);
+#define GGT_FREE(list) ggggtTealFreeThr(&(list))
+#else
+#define GGT_FREE(list) do {} while (0)
+#endif
 
 #define GGT_SPAWN(list, thr, name, args) do { \
     GGGGT_IF_THREADS({ \
@@ -258,33 +260,16 @@ while (!(cond)) \
 #define GGT_LONGJMP(jmpbuf) longjmp((jmpbuf), 1)
 #endif
 
+ggt_thread_t *GGGGT_THR(ggggtTealSleep)(ggt_thread_list_t *, ggt_thread_t *);
 #define GGGGT_SLEEP_B(list, _, block) do { \
-    ggt_thread_t *nthr; \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_wait(thr->lock); \
-    }); \
-    nthr = thr->next; \
-    thr->next->prev = thr->prev; \
-    thr->prev->next = thr->next; \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_post(thr->lock); \
-        ggt_native_sem_wait((list).lock); \
-        thr->lock = (list).lock; \
-    }); \
-    if ((list).next) { \
-        (list).next->prev = thr; \
-        thr->next = (list).next; \
-    } else { \
-        thr->next = NULL; \
-    } \
-    (list).next = thr; \
-    thr->prev = (ggt_thread_t *) (void *) &(list); \
+    ggt_thread_t *nthr_; \
+    nthr_ = GGGGT_THR(ggggtTealSleep)(&(list), thr); \
     if (setjmp(thr->ctx) == 0) { \
         GGGGT_IF_THREADS({ \
             ggt_native_sem_post((list).lock); \
         }); \
         block \
-        longjmp(nthr->ctx, 1); \
+        longjmp(nthr_->ctx, 1); \
     } \
 } while (0)
 
@@ -292,36 +277,11 @@ while (!(cond)) \
     GGGGT_SLEEP_B(list, 0, {}); \
 } while (0)
 
-#define GGT_WAKE_ONE(list) do { \
-    GGGGT_IF_THREADS({ \
-        ggt_native_sem_wait((list).lock); \
-    }); \
-    if ((list).next) { \
-        ggt_thread_t *othr_ = (list).next; \
-        (list).next = othr_->next; \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post((list).lock); \
-            ggt_native_sem_wait(thr->lock); \
-            othr_->lock = thr->lock; \
-        }); \
-        othr_->next = thr->next; \
-        thr->next = othr_; \
-        othr_->prev = thr; \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post(thr->lock); \
-        }); \
-    } else { \
-        GGGGT_IF_THREADS({ \
-            ggt_native_sem_post((list).lock); \
-        }); \
-    } \
-} while (0)
+void GGGGT_THR(ggggtTealWakeOne)(ggt_thread_list_t *list, ggt_thread_t *thr);
+#define GGT_WAKE_ONE(list) GGGGT_THR(ggggtTealWakeOne)(&(list), thr)
 
-#define GGT_WAKE(list) do { \
-    while ((list).next) { \
-        GGT_WAKE_ONE(list); \
-    } \
-} while (0)
+void GGGGT_THR(ggggtTealWake)(ggt_thread_list_t *list, ggt_thread_t *thr);
+#define GGT_WAKE(list) GGGGT_THR(ggggtTealWake)(&(list), thr)
 
 #if GGT_SUPP_JOIN
 #include "sem.h"

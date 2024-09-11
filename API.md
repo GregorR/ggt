@@ -1,10 +1,10 @@
 # API
 
-Include `"ggt/green.h"` to use green threads (but see the “teal threads” section
-below). Green threads are implemented as coroutines using Duff's Device.
+Include `"ggt/green.h"` and link against libggt.a to use green threads (but see
+the “teal threads” section below). Green threads are implemented as coroutines
+using Duff's Device.
 
-GGT is a header-only library, and requires no compilation. It is released under
-the Unlicense and requires no attribution.
+GGT is released under the Unlicense and requires no attribution.
 
 Green threads can only use functions designed to be green threads. This has a
 few restrictions:

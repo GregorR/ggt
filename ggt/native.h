@@ -219,50 +219,14 @@ while (!(cond)) \
 #define GGT_LONGJMP(jmpbuf) longjmp((jmpbuf), 1)
 #endif
 
-#define GGT_SLEEP(list) do { \
-    ggt_native_sem_wait((thr).lock); \
-    if (thr->prev) \
-        thr->prev->next = thr->next; \
-    if (thr->next) \
-        thr->next->prev = thr->prev; \
-    ggt_native_sem_post((thr).lock); \
-    ggt_native_sem_wait((list).lock); \
-    (thr).lock = (list).lock; \
-    if ((list).next) { \
-        (list).next->prev = thr; \
-        thr->next = (list).next; \
-    } else { \
-        thr->next = NULL; \
-    } \
-    (list).next = thr; \
-    thr->prev = (ggt_thread_t *) (void *) &(list); \
-    ggt_native_sem_post((list).lock); \
-    ggt_native_sem_wait(&thr->sleep); \
-} while (0)
+void ggggtNativeSleep(ggt_thread_list_t *, ggt_thread_t *);
+#define GGT_SLEEP(list) ggggtNativeSleep(&(list), thr)
 
-#define GGT_WAKE_ONE(list) do { \
-    ggt_native_sem_wait((list).lock); \
-    if ((list).next) { \
-        ggt_thread_t *othr_ = (list).next; \
-        (list).next = othr_->next; \
-        ggt_native_sem_post((list).lock); \
-        ggt_native_sem_wait((thr).lock); \
-        othr_->lock = (thr).lock; \
-        othr_->next = thr->next; \
-        thr->next = othr_; \
-        othr_->prev = thr; \
-        ggt_native_sem_post((thr).lock); \
-        ggt_native_sem_post(&othr_->sleep); \
-    } else { \
-        ggt_native_sem_post((list).lock); \
-    } \
-} while (0)
+void ggggtNativeWakeOne(ggt_thread_list_t *, ggt_thread_t *);
+#define GGT_WAKE_ONE(list) ggggtNativeWakeOne(&(list), thr)
 
-#define GGT_WAKE(list) do { \
-    while ((list).next) { \
-        GGT_WAKE_ONE(list); \
-    } \
-} while (0)
+void ggggtNativeWake(ggt_thread_list_t *, ggt_thread_t *);
+#define GGT_WAKE(list) ggggtNativeWake(&(list), thr)
 
 static void ggtRun(ggt_thread_list_t *list) {
     ggt_thread_t *thr, *nthr;

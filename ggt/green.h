@@ -246,7 +246,7 @@ void GGGGT_THR(ggggtGreenSleep)(ggt_thread_list_t *, ggt_thread_t *);
 #define GGGGT_SLEEP_B(list, yieldOffset, block) do { \
     GGGGT_SLEEP(list); \
     block \
-    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: 0; \
+    stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: (void) 0; \
 } while (0)
 
 #define GGT_SLEEP(list) do { \

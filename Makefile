@@ -34,11 +34,11 @@ ggt.lib: $(OBJ)
 
 obj/%.o: src/%.c
 	mkdir -p obj
-	$(CC) $(CFLAGS) -I. -c $< -o $@
+	$(CC) $(CFLAGS) -I. -DGGT_COMP_THREADS=0 -c $< -o $@
 
 obj/%-thr.o: src/%.c
 	mkdir -p obj
-	$(CC) $(CFLAGS) -I. -DGGT_SUPP_THREADS=1 -c $< -o $@
+	$(CC) $(CFLAGS) -I. -DGGT_COMP_THREADS=1 -DGGT_SUPP_THREADS=1 -c $< -o $@
 
 clean:
 	rm -f libggt.a ggt.lib

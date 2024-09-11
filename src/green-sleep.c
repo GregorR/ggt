@@ -27,6 +27,8 @@
 
 #include "ggt/green.h"
 
+#if GGT_COMP_THREADS == GGT_SUPP_THREADS
+
 void GGGGT_THR(ggggtGreenSleep)(ggt_thread_list_t *list, ggt_thread_t *thr) {
 #if GGT_SUPP_THREADS
     ggt_native_sem_wait(thr->lock);
@@ -52,3 +54,5 @@ void GGGGT_THR(ggggtGreenSleep)(ggt_thread_list_t *list, ggt_thread_t *thr) {
     ggt_native_sem_post(list->lock);
 #endif
 }
+
+#endif

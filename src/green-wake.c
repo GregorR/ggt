@@ -27,6 +27,8 @@
 
 #include "ggt/green.h"
 
+#if GGT_COMP_THREADS == GGT_SUPP_THREADS
+
 void GGGGT_THR(ggggtGreenWakeOne)(ggt_thread_list_t *list, ggt_thread_t *thr) {
 #if GGT_SUPP_THREADS
     ggt_native_sem_wait(list->lock);
@@ -56,3 +58,5 @@ void GGGGT_THR(ggggtGreenWake)(ggt_thread_list_t *list, ggt_thread_t *thr) {
     while (list->next)
         GGT_WAKE_ONE(*list);
 }
+
+#endif

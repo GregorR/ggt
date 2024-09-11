@@ -30,6 +30,8 @@
 #if GGGGT_SUPP_CTX_SWITCH
 #include "ggt/teal.h"
 
+#if GGT_COMP_THREADS == GGT_SUPP_THREADS
+
 void GGGGT_THR(ggggtTealWakeOne)(ggt_thread_list_t *list, ggt_thread_t *thr) {
 #if GGT_SUPP_THREADS
     ggt_native_sem_wait(list->lock);
@@ -57,5 +59,7 @@ void GGGGT_THR(ggggtTealWake)(ggt_thread_list_t *list, ggt_thread_t *thr) {
     while (list->next)
         GGT_WAKE_ONE(*list);
 }
+
+#endif
 
 #endif

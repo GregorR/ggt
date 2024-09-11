@@ -30,6 +30,8 @@
 #if GGGGT_SUPP_CTX_SWITCH
 #include "ggt/teal.h"
 
+#if GGT_COMP_THREADS == GGT_SUPP_THREADS
+
 ggt_thread_t *GGGGT_THR(ggggtTealSleep)(
     ggt_thread_list_t *list, ggt_thread_t *thr
 ) {
@@ -55,5 +57,7 @@ ggt_thread_t *GGGGT_THR(ggggtTealSleep)(
     thr->prev = (ggt_thread_t *) (void *) list;
     return nthr;
 }
+
+#endif
 
 #endif

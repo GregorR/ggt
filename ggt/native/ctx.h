@@ -20,7 +20,6 @@ static void ggtContextCreate(
               "r" (arg),
               "r" (sp),
               "r" (routine)
-            : "rdi", "rsi"
         );
 
 #elif GGGGT_SUPP_CTX_SWITCH == GGGGT_SUPP_CTX_SWITCH_X86_64
@@ -35,6 +34,34 @@ static void ggtContextCreate(
               "r" (sp),
               "r" (routine)
             : "rdi", "rsi"
+        );
+
+#elif GGGGT_SUPP_CTX_SWITCH == GGGGT_SUPP_CTX_SWITCH_ARM
+        __asm__ volatile(
+            "mov r0, %0\n"
+            "mov r1, %1\n"
+            "mov sp, %2\n"
+            "bx %3\n"
+            :
+            : "r" (thr),
+              "r" (arg),
+              "r" (sp),
+              "r" (routine)
+            : "r0", "r1"
+        );
+
+#elif GGGGT_SUPP_CTX_SWITCH == GGGGT_SUPP_CTX_SWITCH_ARM64
+        __asm__ volatile(
+            "mov x0, %0\n"
+            "mov x1, %1\n"
+            "mov sp, %2\n"
+            "br %3\n"
+            :
+            : "r" (thr),
+              "r" (arg),
+              "r" (sp),
+              "r" (routine)
+            : "x0", "x1"
         );
 
 #endif

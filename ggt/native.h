@@ -220,7 +220,12 @@ while (!(cond)) \
 #endif
 
 void ggggtNativeSleep(ggt_thread_list_t *, ggt_thread_t *);
-#define GGT_SLEEP(list) ggggtNativeSleep(&(list), thr)
+#define GGT_SLEEP(list, block) do { \
+    ggggtNativeSleep(&(list), thr); \
+    block \
+    ggt_native_sem_wait(&thr->sleep); \
+} while (0)
+#define GGGGT_SLEEP(list, _, block) GGT_SLEEP(list, block)
 
 void ggggtNativeWakeOne(ggt_thread_list_t *, ggt_thread_t *);
 #define GGT_WAKE_ONE(list) ggggtNativeWakeOne(&(list), thr)

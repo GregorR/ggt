@@ -127,10 +127,12 @@ To continue yielding until a condition is met, use
 `GGT_YIELD_UNTIL(condition);`. Note that this is a polling loop, and so is not
 an efficient way to check the condition.
 
-Instead, you can use `GGT_SLEEP(list);` on a thread list to put a thread to
-sleep (it will not be schedule for execution), and `GGT_WAKE(list);` to wake all
-threads on a list (or, `GGT_WAKE_ONE(list);` to wake only one thread). Make sure
-you `GGT_INIT` the thread list before using it.
+Instead, you can use `GGT_SLEEP(list, {...});` on a thread list to put a thread
+to sleep (it will not be schedule for execution), and `GGT_WAKE(list);` to wake
+all threads on a list (or, `GGT_WAKE_ONE(list);` to wake only one thread). Make
+sure you `GGT_INIT` the thread list before using it. The `{...}` part is a block
+that runs after scheduling the thread on the list but before yielding, so that
+you can unlock things if needed before yielding.
 
 
 ## Exceptions

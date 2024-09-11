@@ -48,7 +48,6 @@ void ggggtNativeSleep(ggt_thread_list_t *list, ggt_thread_t *thr) {
     list->next = thr;
     thr->prev = (ggt_thread_t *) (void *) list;
     ggt_native_sem_post(list->lock);
-    ggt_native_sem_wait(&thr->sleep);
 }
 
 #endif

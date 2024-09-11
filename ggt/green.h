@@ -241,17 +241,12 @@ void ggggtGreenFreeThr(ggt_thread_list_t *);
 } while (0)
 
 void GGGGT_THR(ggggtGreenSleep)(ggt_thread_list_t *, ggt_thread_t *);
-#define GGGGT_SLEEP(list) GGGGT_THR(ggggtGreenSleep)(&(list), thr)
-
-#define GGGGT_SLEEP_B(list, yieldOffset, block) do { \
-    GGGGT_SLEEP(list); \
+#define GGGGT_SLEEP(list, yieldOffset, block) do { \
+    GGGGT_THR(ggggtGreenSleep)(&(list), thr); \
     block \
     stack->state = __LINE__-yieldOffset; return; case __LINE__-yieldOffset: (void) 0; \
 } while (0)
-
-#define GGT_SLEEP(list) do { \
-    GGGGT_SLEEP_B(list, 0, {}); \
-} while (0)
+#define GGT_SLEEP(list, block) GGGGT_SLEEP(list, 1, block)
 
 void GGGGT_THR(ggggtGreenWakeOne)(ggt_thread_list_t *, ggt_thread_t *);
 #define GGT_WAKE_ONE(list) GGGGT_THR(ggggtGreenWakeOne)(&(list), thr)
@@ -358,7 +353,7 @@ static void ggtRun(ggt_thread_list_t *list) {
 #define GGT_JOIN(othr) do { \
     GGT_SEM_WAIT(&(othr).joinLock); \
     if ((othr).stack) { \
-        GGGGT_SLEEP_B((othr).joined, 1, { \
+        GGT_SLEEP((othr).joined, { \
             ggt_sem_post(thr, &(othr).joinLock); \
         }); \
     } else { \

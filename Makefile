@@ -2,6 +2,7 @@ CC=gcc
 CFLAGS=-O3
 AR=ar
 RANLIB=ranlib
+LIB=wlib
 
 OBJ=\
     obj/green-init.o \
@@ -27,6 +28,10 @@ libggt.a: $(OBJ)
 	$(AR) rc $@ $(OBJ)
 	$(RANLIB) $@
 
+ggt.lib: $(OBJ)
+	rm -f $@
+	$(LIB) -n $@ $(addprefix +,$(OBJ))
+
 obj/%.o: src/%.c
 	mkdir -p obj
 	$(CC) $(CFLAGS) -I. -c $< -o $@
@@ -36,5 +41,5 @@ obj/%-thr.o: src/%.c
 	$(CC) $(CFLAGS) -I. -DGGT_SUPP_THREADS=1 -c $< -o $@
 
 clean:
-	rm -f libggt.a
+	rm -f libggt.a ggt.lib
 	rm -rf obj

@@ -2,7 +2,7 @@ CC=cc
 CFLAGS=-O3
 AR=ar
 RANLIB=ranlib
-WLIB=wlib
+LIB=wlib
 
 OBJS=\
 	obj/green-init.o \
@@ -28,9 +28,9 @@ libggt.a: $(OBJS)
 	$(AR) rc $@ $(OBJS)
 	$(RANLIB) $@
 
-wlib: $(OBJS)
+lib: $(OBJS)
 	rm -f ggt.lib
-	$(WLIB) -n ggt.lib $(addprefix +,$(OBJS))
+	$(LIB) -n ggt.lib $(addprefix +,$(OBJS))
 
 zcclib: $(OBJS)
 	$(CC) -x -o ggt.lib $(OBJS)

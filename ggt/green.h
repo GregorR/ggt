@@ -294,6 +294,7 @@ void GGGGT_THR(ggggtGreenWake)(ggt_thread_list_t *, ggt_thread_t *);
 #include "sem.h"
 #endif
 
+#define GGT_RUN(list) ggtRun(&(list))
 static void ggtRun(ggt_thread_list_t *list) {
     ggt_thread_t *thr, *nthr;
     ggt_stack_t *stack;

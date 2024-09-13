@@ -290,6 +290,7 @@ void GGGGT_THR(ggggtTealWake)(ggt_thread_list_t *list, ggt_thread_t *thr);
 #include "sem.h"
 #endif
 
+#define GGT_RUN(list) ggtRun(&(list))
 static void ggtRun(ggt_thread_list_t *list) {
     void **cleanup;
     while (list->next != (ggt_thread_t *) (void *) list) {

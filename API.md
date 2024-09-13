@@ -99,8 +99,12 @@ including `"ggt/green.h"`.
 
 To spawn the initial threads (i.e., to spawn a thread from a non-green-thread
 environment), use a `ggt_thread_list_t` as the parent, using `GGT_INIT` to
-initialize it. Then, use `ggtRun` to execute green threads. Use `GGT_FREE` to
-free the resources associated with the thread list.
+initialize it. Use `GGT_FREE` to free the resources associated with the thread
+list.
+
+Depending on the backend, you may or may not need to use `GGT_RUN` to run
+threads. In all cases, you must either use `GGT_RUN` or use `GGT_JOIN` with your
+initial threads.
 
 ```c
 int main() {
@@ -108,7 +112,11 @@ int main() {
     ggt_thread_t thr;
     GGT_INIT(list);
     GGT_SPAWN(list, thr, bar, (&thr));
-    ggtRun(&list);
+#ifdef GGT_RUN
+    GGT_RUN(list);
+#else
+    GGT_JOIN(thr);
+#endif
     GGT_FREE(list);
     return 0;
 }
@@ -217,8 +225,10 @@ have the choice).
 GGT provides semaphores for synchronization. Locks can be implemented in terms
 of semaphores.
 
-Include `"ggt/sem.h"` for semaphore support. The type of a semaphore is
-`ggt_sem_t`. The API is similar to POSIX semaphores:
+Include `"ggt/sem.h"` for semaphore support. It must be included *after* GGT
+itself, as it adapts to the style of green threads used.
+
+The type of a semaphore is `ggt_sem_t`. The API is similar to POSIX semaphores:
 
 `ggt_sem_init(semaphore, value)` initializes a semaphore with the given value.
 `semaphore` is a `ggt_sem_t *`.

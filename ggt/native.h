@@ -88,7 +88,7 @@ typedef jmp_buf ggt_jmpbuf_t;
 #define GGGGT_EXC_LOCALS()
 #endif
 
-typedef void ggt_ret_t;
+typedef void *ggt_ret_t;
 
 #define GGT(name, params, locals, trans) \
 ggt_ret_t name params { \
@@ -234,21 +234,6 @@ void ggggtNativeWakeOne(ggt_thread_list_t *, ggt_thread_t *);
 
 void ggggtNativeWake(ggt_thread_list_t *, ggt_thread_t *);
 #define GGT_WAKE(list) ggggtNativeWake(&(list), thr)
-
-static void ggtRun(ggt_thread_list_t *list) {
-    ggt_thread_t *thr, *nthr;
-    ggt_native_sem_wait(list->lock);
-    thr = list->next;
-    while (thr) {
-        nthr = thr->next;
-        /* FIXME: This is a race */
-        ggt_native_sem_post(list->lock);
-        ggt_native_thread_join(&thr->pth);
-        ggt_native_sem_wait(list->lock);
-        thr = nthr;
-    }
-    ggt_native_sem_post(list->lock);
-}
 
 #define GGT_JOIN(thr) \
     ggt_native_thread_join(&((thr).pth))

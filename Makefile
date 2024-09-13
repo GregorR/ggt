@@ -1,8 +1,8 @@
-CC=gcc
+CC=cc
 CFLAGS=-O3
 AR=ar
 RANLIB=ranlib
-LIB=wlib
+WLIB=wlib
 
 OBJ=\
     obj/green-init.o \
@@ -28,9 +28,13 @@ libggt.a: $(OBJ)
 	$(AR) rc $@ $(OBJ)
 	$(RANLIB) $@
 
-ggt.lib: $(OBJ)
+wlib: $(OBJ)
 	rm -f $@
-	$(LIB) -n $@ $(addprefix +,$(OBJ))
+	$(WLIB) -n ggt.lib $(addprefix +,$(OBJ))
+
+zcclib: $(OBJ)
+	rm -f $@
+	$(CC) -x -o ggt.lib $(OBJ)
 
 obj/%.o: src/%.c
 	mkdir -p obj

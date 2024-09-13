@@ -166,9 +166,9 @@ keep it.
 
 A `GGT_CATCH` block actually acts as both `catch` and `finally`. That is, the
 catch block will be run when the function returns *even if there was no throw*.
-`ex` will be `NULL` if no exception was thrown. To use it strictly as a catch,
-rethrow `ex` at the end of the catch block. Throwing `NULL` is equivalent to
-returning.
+`ex` will be `NULL` if no exception was thrown. To use it strictly as a catch
+block, check if `ex` is null. To use it strictly as a finally block, rethrow
+`ex` at the end of the catch block. Throwing `NULL` is equivalent to returning.
 
 Catch blocks cannot lexically nest, and there can only be one catch block for a
 function. Different functions in the call stack may have different catch blocks,
@@ -178,7 +178,7 @@ To throw, use `GGT_THROW(ex)`. The value thrown must be a `void *`. If the value
 is `NULL`, this is equivalent to returning. Otherwise, it's up to you to
 interpret what it actually means.
 
-To use a `setjmp`/`longjmp`-like behavior, use a `ggt_jmp_buf_t` as `jmp_buf`,
+To use a `setjmp`/`longjmp`-like behavior, use a `ggt_jmpbuf_t` as `jmp_buf`,
 and use `GGT_SETJMP(jmpbuf, {...});` for `setjmp` (with `{...}` as an actual
 code block to run), and `GGT_LONGJMP(jmpbuf)` for `longjmp`. Note that `longjmp`
 doesn't pass a value, like normal `longjmp`, because it isn't needed to

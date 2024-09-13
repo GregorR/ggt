@@ -90,7 +90,12 @@ int main() {
     GGT_INIT(list);
     GGT_SPAWN(list, thrA, a, (&thrA));
     GGT_SPAWN(list, thrB, b, (&thrB));
-    ggtRun(&list);
+#ifdef GGT_RUN
+    GGT_RUN(list);
+#else
+    GGT_JOIN(thrA);
+    GGT_JOIN(thrB);
+#endif
     GGT_FREE(list);
     return 0;
 }

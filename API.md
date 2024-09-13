@@ -122,9 +122,9 @@ int main() {
 }
 ```
 
-There is no guarantee that threads only start with `ggtRun`. `ggtRun` merely
-continues them. Threads spawned by other threads automatically add themselves to
-the thread list.
+There is no guarantee that threads only start with `GGT_RUN`. `GGT_RUN` merely
+continues them and runs them to completion. Threads spawned by other threads
+automatically add themselves to the thread list.
 
 
 ## Preemption and blocking

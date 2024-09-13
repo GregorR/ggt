@@ -109,7 +109,11 @@ int main() {
 
     GGT_INIT(list);
     GGT_SPAWN(list, thr, sort, (&thr, arr, TOTAL_SIZE));
-    ggtRun(&list);
+#ifdef GGT_RUN
+    GGT_RUN(list);
+#else
+    GGT_JOIN(thr);
+#endif
     GGT_FREE(list);
 
     return 0;

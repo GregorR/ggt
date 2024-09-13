@@ -26,6 +26,10 @@
 
 ggt_jmpbuf_t jb;
 
+ggt_ret_t printer(ggt_thread_t *, const char *);
+ggt_ret_t a(ggt_thread_t *);
+ggt_ret_t b(ggt_thread_t *);
+
 GGT(printer, (ggt_thread_t *thr, const char *toPrint), {
     const char *toPrint;
 }, {

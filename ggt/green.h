@@ -140,10 +140,12 @@ typedef struct ggt_jmpbuf_t {
 } ggt_jmpbuf_t;
 #endif
 
+typedef ggt_stack_t *ggt_ret_t;
+
 #define GGT(name, params, locals, trans) \
 struct name ## Locals locals; \
 static void name ## Runner(ggt_thread_t *); \
-ggt_stack_t *name params { \
+ggt_ret_t name params { \
     ggt_stack_t *stack; \
     struct name ## Locals *l; \
     stack = malloc(sizeof(ggt_stack_t) + sizeof(struct name ## Locals)); \

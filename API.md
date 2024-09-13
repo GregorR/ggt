@@ -42,7 +42,7 @@ The `GGT` macro takes four arguments: the name, the parameters, the structure of
 the local-variable object, and a transfer block for transferring arguments to
 local variables. The first parameter must be the thread and must be named `thr`.
 This macro is only needed for definition. A standard function declaration (with
-`void` return type) is sufficient.
+`ggt_ret_t` as the return type) is sufficient.
 
 `GGT` declares functions that are usable *in* green threads, but not functions
 that are usable *as* green threads (i.e., you cannot spawn a green thread with

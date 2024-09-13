@@ -88,8 +88,10 @@ typedef jmp_buf ggt_jmpbuf_t;
 #define GGGGT_EXC_LOCALS()
 #endif
 
+typedef void ggt_ret_t;
+
 #define GGT(name, params, locals, trans) \
-void *name params { \
+ggt_ret_t name params { \
     struct locals l[1]; \
     GGGGT_EXC_LOCALS(); \
     trans
@@ -103,7 +105,7 @@ struct name ## Arg { \
     struct name ## Locals *l; \
 }; \
 static void *name ## Runner(void *); \
-void name params { \
+ggt_ret_t name params { \
     struct name ## Arg arg; \
     struct name ## Locals *l; \
     arg.thr = thr; \

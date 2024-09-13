@@ -129,9 +129,11 @@ typedef jmp_buf ggt_jmpbuf_t;
 #else
 #define GGGGT_EXC_LOCALS()
 #endif
-              
+
+typedef void ggt_ret_t;
+
 #define GGT(name, params, locals, trans) \
-void name params { \
+ggt_ret_t name params { \
     struct locals l[1]; \
     GGGGT_EXC_LOCALS(); \
     trans
@@ -145,7 +147,7 @@ static void ggggtExit(ggt_thread_t *thr);
 struct name ## Locals locals; \
 static void name ## Runner(ggt_thread_t *, void *); \
 static void name ## Real(ggt_thread_t *, struct name ## Locals *); \
-void name params { \
+ggt_ret_t name params { \
     struct name ## Locals *l; \
     thr->stack = malloc(GGGGT_STACK_SZ); \
     if (thr->stack == NULL) { \

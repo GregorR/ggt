@@ -34,6 +34,7 @@
 #include "native/threads.h"
 #include "native/sem.h"
 
+#define GGT_FAKE 0
 #define GGT_GREEN 0
 #define GGT_TEAL 0
 #define GGT_NATIVE 1
@@ -92,9 +93,13 @@ typedef void *ggt_ret_t;
 
 #define GGT(name, params, locals, trans) \
 ggt_ret_t name params { \
-    struct locals l[1]; \
+    locals \
     GGGGT_EXC_LOCALS(); \
     trans
+
+#define GGT_P(t, x)
+#define GGT_L(x) (x)
+#define GGT_T(x) (void) 0
 
 #define GGT_E(name, params, locals, trans) \
 struct name ## Locals locals; \
@@ -131,6 +136,10 @@ static void *name ## Runner(void *argP) { \
     ggt_native_sem_post(&arg->threadReady); \
     ggt_native_sem_wait(&localsReady); \
     ggt_native_sem_destroy(&localsReady);
+
+#define GGT_EP(t, x) t x;
+#define GGT_EL(x) (l->x)
+#define GGT_ET(x) (l->x = x)
 
 #if GGT_SUPP_EXCEPTIONS
 #define GGT_RETURN() do { \

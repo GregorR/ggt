@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define GGT_FAKE 0
 #define GGT_GREEN 1
 #define GGT_TEAL 0
 #define GGT_NATIVE 0
@@ -143,7 +144,7 @@ typedef struct ggt_jmpbuf_t {
 typedef ggt_stack_t *ggt_ret_t;
 
 #define GGT(name, params, locals, trans) \
-struct name ## Locals locals; \
+struct name ## Locals { locals }; \
 static void name ## Runner(ggt_thread_t *); \
 ggt_ret_t name params { \
     ggt_stack_t *stack; \
@@ -160,7 +161,7 @@ ggt_ret_t name params { \
         (stack)->catch_ = 0; \
     }); \
     l = (struct name ## Locals *) (void *) (stack + 1); \
-    trans \
+    { trans } \
     thr->stack = stack; \
     name ## Runner(thr); \
     return stack; \
@@ -173,6 +174,13 @@ static void name ## Runner(ggt_thread_t *thr) { \
         case GGGGT_STATE_INIT: (void) 0;
 
 #define GGT_E GGT
+
+#define GGT_P(t, x) t x;
+#define GGT_L(x) (l->x)
+#define GGT_T(x) (l->x = x)
+#define GGT_EP GGT_P
+#define GGT_EL GGT_L
+#define GGT_ET GGT_T
 
 #define GGT_RETURN() do { \
     stack->state = GGGGT_STATE_DONE; \

@@ -13,7 +13,9 @@
 #define GGT_SUPP_TEAL GGGGT_SUPP_CTX_SWITCH
 #endif
 
-#if GGT_SUPP_NATIVE
+#if defined(GGT_FORCE_FAKE) && GGT_FORCE_FAKE
+#include "fake.h"
+#elif GGT_SUPP_NATIVE
 #include "native.h"
 #elif GGT_SUPP_TEAL
 #include "teal.h"

@@ -9,8 +9,9 @@ GGT is released under the Unlicense and requires no attribution.
 Green threads can only use functions designed to be green threads. This has a
 few restrictions:
 
- * Local variables must be stored in a special local-variable object named `l`.
-   So, local variables are at `l->foo`, not `foo`.
+ * Local variables may need to be stored in special local-variable structs. To
+   accommodate this, local variables are `GGT_L(foo)`, not `foo`. You're
+   recommended to `#define L GGT_L` to make this easier.
 
  * Green-thread functions cannot return values. To return a value, use a return
    parameter.
@@ -22,15 +23,16 @@ green-thread functions must be declared using correct macros. Here is a simple
 green-thread function named `foo`:
 
 ```c
-GGT(foo, (ggt_thread_t *thr, int *ret), {
-    int *ret;
+GGT(foo, (ggt_thread_t *thr, int *ret),
+    GGT_P(int *, ret)
     int comp;
-}, {
-    l->ret = ret;
-}) {
-    *l->ret = 0;
-    for (l->comp = 42; l->comp > 0; l->comp--) {
-        *l->ret += l->comp;
+,
+    GGT_T(ret);
+    comp = 0;
+) {
+    *GGT_L(ret) = 0;
+    for (GGT_L(comp) = 42; GGT_L(comp) > 0; GGT_L(comp)--) {
+        *GGT_L(ret) += GGT_L(comp);
         GGT_YIELD();
     }
 
@@ -38,20 +40,30 @@ GGT(foo, (ggt_thread_t *thr, int *ret), {
 }
 ```
 
-The `GGT` macro takes four arguments: the name, the parameters, the structure of
-the local-variable object, and a transfer block for transferring arguments to
-local variables. The first parameter must be the thread and must be named `thr`.
-This macro is only needed for definition. A standard function declaration (with
-`ggt_ret_t` as the return type) is sufficient.
+The `GGT` macro takes four arguments: the name, the parameters, the local
+variables, and a transfer block for transferring arguments to local variables
+(which may also be used for other local-variable initialization). The first
+parameter must be the thread and must be named `thr`. This macro is only needed
+for definition. A standard function declaration (with `ggt_ret_t` as the return
+type) is sufficient.
+
+Within that macro, the macros `GGT_P`, `GGT_T`, and `GGT_L` are also necessary,
+and it is recommended that you `#define` all of them to shorter names (e.g.,
+`P`, `T`, and `L`) for ease of use. Use `GGT_P(type, name)` to declare a local
+variable for a parameter, and use `GGT_T(name);` to transfer that parameter's
+argument to the local variable. These are needed because different backends can
+store local variables in different, often more efficient, ways. Use
+`GGT_L(name)` to access a local variable.
 
 `GGT` declares functions that are usable *in* green threads, but not functions
 that are usable *as* green threads (i.e., you cannot spawn a green thread with
 them). Use `GGT_E` to make an entry-point function; it takes the same arguments
-as `GGT`.
+as `GGT`. Use `GGT_EP`, `GGT_ET`, and `GGT_EL` in place of `GGT_P`, `GGT_T`, and
+`GGT_L` for entry-point functions.
 
 (Note: The distinction between `GGT` and `GGT_E` actually only exists in the
-native-thread compatibility layer. If only using green threads, they're the
-same.)
+teal- and native-thread compatibility layer. If only using green threads,
+they're the same.)
 
 All `GGT` and `GGT_E` functions must end with `GGT_END();`.
 
@@ -68,7 +80,8 @@ with a few exceptions:
 
  * Normal functions can be called in a traditional way, but to call a
    green-thread function, you must use `GGT_CALL(target, (args))`. For instance,
-   to call the above `foo` function, `GGT_CALL(foo, (thr, &l->resultOfFoo));`.
+   to call the above `foo` function,
+   `GGT_CALL(foo, (thr, &GGT_L(resultOfFoo)));`.
 
  * To return, use `GGT_RETURN();`.
 
@@ -80,15 +93,15 @@ instance, here's a simple `bar` green-thread function, and a function `baf` to
 spawn it:
 
 ```c
-GGT_E(bar, (ggt_thread_t *thr), {}, {}) {
+GGT_E(bar, (ggt_thread_t *thr),,) {
     printf("I'm bar!\n");
 }
 
-GGT(baf, (ggt_thread_t *thr), {
+GGT(baf, (ggt_thread_t *thr),
     ggt_thread_t barThread;
-}, {}) {
-    GGT_SPAWN(*thr, l->barThread, bar, (&l->barThread));
-    GGT_JOIN(l->barThread);
+,) {
+    GGT_SPAWN(*thr, GGT_L(barThread), bar, (&GGT_L(barThread)));
+    GGT_JOIN(GGT_L(barThread));
 }
 ```
 
@@ -161,8 +174,8 @@ GGT_CATCH(ex, {
 ```
 
 Note that `ex` is a local variable, which means it will be lost if the green
-thread yields. Make sure to save it to local variable in `l->` if you need to
-keep it.
+thread yields. Make sure to save it to a local variable in `GGT_L` if you need
+to keep it.
 
 A `GGT_CATCH` block actually acts as both `catch` and `finally`. That is, the
 catch block will be run when the function returns *even if there was no throw*.
@@ -210,6 +223,11 @@ You can use green and teal threads on platforms that support native threads. To
 use both at the same time, define `GGT_SUPP_THREADS` to `1` before including
 GGT. If you don't, green/teal threads won't be threadsafe with respect to native
 threads.
+
+You can also include `"ggt/fake.h"` or set `GGT_FORCE_FAKE=1` and include
+`"ggt/best.h"` to use fake threading, which really just runs each thread to
+completion eagerly. Of course, no interthread communication or context switching
+works in this mode, so it's mostly for debugging.
 
 Green threads are a tradeoff between time and space efficiency. GGT green
 threads use heap allocation for stack frames, which is less time efficient, but

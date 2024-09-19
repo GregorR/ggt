@@ -34,6 +34,7 @@
 
 #include <setjmp.h>
 
+#define GGT_FAKE 0
 #define GGT_GREEN 0
 #define GGT_TEAL 1
 #define GGT_NATIVE 0
@@ -134,9 +135,13 @@ typedef void ggt_ret_t;
 
 #define GGT(name, params, locals, trans) \
 ggt_ret_t name params { \
-    struct locals l[1]; \
+    locals \
     GGGGT_EXC_LOCALS(); \
     trans
+
+#define GGT_P(t, x)
+#define GGT_L(x) (x)
+#define GGT_T(x) (void) 0
 
 static void ggggtExit(ggt_thread_t *thr);
 
@@ -144,7 +149,7 @@ static void ggggtExit(ggt_thread_t *thr);
     (((x) + 2*sizeof(void *) - 1) / (2*sizeof(void *)) * (2*sizeof(void *)))
 
 #define GGT_E(name, params, locals, trans) \
-struct name ## Locals locals; \
+struct name ## Locals { locals }; \
 static void name ## Runner(ggt_thread_t *, void *); \
 static void name ## Real(ggt_thread_t *, struct name ## Locals *); \
 ggt_ret_t name params { \
@@ -161,7 +166,7 @@ ggt_ret_t name params { \
         thr->throw_ = NULL; \
         thr->catch_ = NULL; \
     }); \
-    trans \
+    { trans }\
     ggtContextCreate(thr, (unsigned char *) l, name ## Runner, (void *) l); \
 } \
 static void name ## Runner(ggt_thread_t *thr, void *l_) { \
@@ -170,6 +175,10 @@ static void name ## Runner(ggt_thread_t *thr, void *l_) { \
 } \
 static void name ## Real(ggt_thread_t *thr, struct name ## Locals *l) { \
     GGGGT_EXC_LOCALS();
+
+#define GGT_EP(t, x) t x;
+#define GGT_EL(x) (l->x)
+#define GGT_ET(x) (l->x = x)
 
 #if GGT_SUPP_EXCEPTIONS
 #define GGT_RETURN() do { \

@@ -102,7 +102,7 @@ ggt_ret_t name params { \
 #define GGT_T(x) (void) 0
 
 #define GGT_E(name, params, locals, trans) \
-struct name ## Locals locals; \
+struct name ## Locals { locals }; \
 struct name ## Arg { \
     ggt_thread_t *thr; \
     ggt_native_sem_t threadReady; \

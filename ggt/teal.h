@@ -100,6 +100,7 @@ typedef struct ggt_thread_list_t {
 
 typedef struct ggt_thread_t {
     struct ggt_thread_t *prev, *next;
+    void *user;
     jmp_buf ctx;
     void ***cleanup;
     unsigned char *stack;
@@ -133,8 +134,10 @@ typedef jmp_buf ggt_jmpbuf_t;
 
 typedef void ggt_ret_t;
 
+#define GGT_RET_T ggt_ret_t
+
 #define GGT(name, params, locals, trans) \
-ggt_ret_t name params { \
+GGT_RET_T name params { \
     locals \
     GGGGT_EXC_LOCALS(); \
     trans

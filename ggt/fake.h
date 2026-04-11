@@ -53,7 +53,9 @@
 
 typedef unsigned char ggt_thread_list_t;
 
-typedef unsigned char ggt_thread_t;
+typedef struct ggt_thread_t {
+    void *user;
+} ggt_thread_t;
 
 #if GGT_SUPP_SJLJ
 #include <setjmp.h>
@@ -62,8 +64,10 @@ typedef jmp_buf ggt_jmpbuf_t;
 
 typedef void *ggt_ret_t;
 
+#define GGT_RET_T ggt_ret_t
+
 #define GGT(name, params, locals, trans) \
-ggt_ret_t name params { \
+GGT_RET_T name params { \
     locals \
     trans
 

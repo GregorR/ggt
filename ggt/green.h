@@ -112,6 +112,7 @@ typedef struct ggt_thread_list_t {
 
 typedef struct ggt_thread_t {
     struct ggt_thread_t *next, *prev;
+    void *user;
     struct ggt_stack_t *stack;
 #if GGT_SUPP_THREADS
     ggt_native_sem_t *lock;
@@ -143,10 +144,12 @@ typedef struct ggt_jmpbuf_t {
 
 typedef ggt_stack_t *ggt_ret_t;
 
+#define GGT_RET_T ggt_ret_t
+
 #define GGT(name, params, locals, trans) \
 struct name ## Locals { locals }; \
 static void name ## Runner(ggt_thread_t *); \
-ggt_ret_t name params { \
+GGT_RET_T name params { \
     ggt_stack_t *stack; \
     struct name ## Locals *l; \
     stack = malloc(sizeof(ggt_stack_t) + sizeof(struct name ## Locals)); \

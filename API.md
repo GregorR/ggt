@@ -1,8 +1,8 @@
 # API
 
-Include `"ggt/green.h"` and link against libggt.a to use green threads (but see
-the “teal threads” section below). Green threads are implemented as coroutines
-using Duff's Device.
+Include `"ggt/green.h"` and link against libggt.a to use green threads (or link
+against `"ggt/best.h"`; see the teal threads section below). Green threads are
+implemented as coroutines using Duff's Device.
 
 GGT is released under the Unlicense and requires no attribution.
 
@@ -16,7 +16,8 @@ few restrictions:
  * Green-thread functions cannot return values. To return a value, use a return
    parameter.
 
- * All green-thread functions have the thread itself as their first parameter.
+ * All green-thread functions have the thread itself as their first parameter,
+   which must be named `thr`.
 
 To cope with these restrictions and to correctly handle green threads, all
 green-thread functions must be declared using correct macros. Here is a simple
@@ -49,11 +50,16 @@ type) is sufficient.
 
 Within that macro, the macros `GGT_P`, `GGT_T`, and `GGT_L` are also necessary,
 and it is recommended that you `#define` all of them to shorter names (e.g.,
-`P`, `T`, and `L`) for ease of use. Use `GGT_P(type, name)` to declare a local
-variable for a parameter, and use `GGT_T(name);` to transfer that parameter's
-argument to the local variable. These are needed because different backends can
-store local variables in different, often more efficient, ways. Use
-`GGT_L(name)` to access a local variable.
+`P`, `T`, and `L`) for ease of use.
+
+ * All local variables, including parameters, must be in the local variable
+   structure. Use `GGT_P(type, name)` to declare a local variable for a
+   parameter.
+ * Use `GGT_T(name);` to transfer a parameter's argument to the local variable.
+ * Use `GGT_L(name)` to access a local variable.
+
+These are needed because different backends can store local variables in
+different, often more efficient, ways.
 
 `GGT` declares functions that are usable *in* green threads, but not functions
 that are usable *as* green threads (i.e., you cannot spawn a green thread with
@@ -138,6 +144,10 @@ int main() {
 There is no guarantee that threads only start with `GGT_RUN`. `GGT_RUN` merely
 continues them and runs them to completion. Threads spawned by other threads
 automatically add themselves to the thread list.
+
+The `ggt_thread_t` type is opaque to the user, except that it contains at least
+the field `void *user;`. That field is free for you to use in any way that you
+wish.
 
 
 ## Preemption and blocking
